@@ -4,9 +4,13 @@ import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+
 
 const HeroSection = () => {
   const imageRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     const imageElement = imageRef.current;
@@ -36,8 +40,7 @@ const HeroSection = () => {
             Professional Success
           </h1>
           <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl">
-            Advance your career with personalized guidance, interview prep, and
-            AI-powered tools for job success.
+            Get personalized career guidance, AI-generated resumes, industry insights, and interview preparation tailored to your skills and goals.
           </p>
         </div>
         <div className="flex justify-center space-x-4">
@@ -46,11 +49,9 @@ const HeroSection = () => {
               Get Started
             </Button>
           </Link>
-          <Link href="https://www.youtube.com/roadsidecoder">
-            <Button size="lg" variant="outline" className="px-8">
-              Watch Demo
+            <Button onClick={() => router.push("/ai-coach")}>
+             Try AI Coach
             </Button>
-          </Link>
         </div>
         <div className="hero-image-wrapper mt-5 md:mt-0">
           <div ref={imageRef} className="hero-image">

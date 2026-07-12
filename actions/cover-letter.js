@@ -2,11 +2,9 @@
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { groq } from "@/lib/groq";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+/* ================= GENERATE COVER LETTER ================= */
 export async function generateCoverLetter(data) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -17,35 +15,51 @@ export async function generateCoverLetter(data) {
 
   if (!user) throw new Error("User not found");
 
-  const prompt = `
-    Write a professional cover letter for a ${data.jobTitle} position at ${
-    data.companyName
-  }.
-    
-    About the candidate:
-    - Industry: ${user.industry}
-    - Years of Experience: ${user.experience}
-    - Skills: ${user.skills?.join(", ")}
-    - Professional Background: ${user.bio}
-    
-    Job Description:
-    ${data.jobDescription}
-    
-    Requirements:
-    1. Use a professional, enthusiastic tone
-    2. Highlight relevant skills and experience
-    3. Show understanding of the company's needs
-    4. Keep it concise (max 400 words)
-    5. Use proper business letter formatting in markdown
-    6. Include specific examples of achievements
-    7. Relate candidate's background to job requirements
-    
-    Format the letter in markdown.
-  `;
-
   try {
-    const result = await model.generateContent(prompt);
-    const content = result.response.text().trim();
+    const res = await groq.chat.completions.create({
+       model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a professional cover letter writer. Write only clean markdown text.",
+        },
+        {
+          role: "user",
+          content: `
+Write a highly personalized and professional cover letter.
+
+Job Details:
+- Company: ${data.companyName}
+- Role: ${data.jobTitle}
+
+Candidate Profile:
+- Industry: ${user.industry}
+- Experience: ${user.experience}
+- Skills: ${user.skills?.join(", ")}
+- Bio: ${user.bio}
+
+Job Description:
+${data.jobDescription}
+
+Instructions:
+- Analyze the job description and identify key required skills
+- Highlight matching skills from the candidate profile
+- Show how candidate is a good fit for the role
+- Use strong action words and achievements
+- Keep tone professional and impactful
+- Avoid generic phrases
+
+Output:
+- Max 300–400 words
+- Clean markdown format
+`,
+        },
+      ],
+      temperature: 0.7,
+    });
+
+    const content = res.choices[0].message.content.trim();
 
     const coverLetter = await db.coverLetter.create({
       data: {
@@ -60,11 +74,47 @@ export async function generateCoverLetter(data) {
 
     return coverLetter;
   } catch (error) {
-    console.error("Error generating cover letter:", error.message);
+    console.error("Cover letter AI error:", error.message);
     throw new Error("Failed to generate cover letter");
   }
 }
 
+export async function improveCoverLetter(content) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    const res = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert career coach.",
+        },
+        {
+          role: "user",
+          content: `
+Improve the following cover letter:
+- Make it more professional
+- Improve clarity and impact
+- Remove unnecessary words
+- Make it concise
+
+Cover Letter:
+${content}
+          `,
+        },
+      ],
+      temperature: 0.7,
+    });
+
+    return res.choices[0].message.content.trim();
+  } catch (error) {
+    throw new Error("Failed to improve cover letter");
+  }
+}
+
+/* ================= GET ALL ================= */
 export async function getCoverLetters() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -76,15 +126,12 @@ export async function getCoverLetters() {
   if (!user) throw new Error("User not found");
 
   return await db.coverLetter.findMany({
-    where: {
-      userId: user.id,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
   });
 }
 
+/* ================= GET SINGLE ================= */
 export async function getCoverLetter(id) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -95,7 +142,7 @@ export async function getCoverLetter(id) {
 
   if (!user) throw new Error("User not found");
 
-  return await db.coverLetter.findUnique({
+  return await db.coverLetter.findFirst({
     where: {
       id,
       userId: user.id,
@@ -103,6 +150,7 @@ export async function getCoverLetter(id) {
   });
 }
 
+/* ================= DELETE ================= */
 export async function deleteCoverLetter(id) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -114,9 +162,6 @@ export async function deleteCoverLetter(id) {
   if (!user) throw new Error("User not found");
 
   return await db.coverLetter.delete({
-    where: {
-      id,
-      userId: user.id,
-    },
+    where: { id },
   });
 }

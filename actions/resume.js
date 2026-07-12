@@ -2,12 +2,10 @@
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { groq } from "@/lib/groq";
 import { revalidatePath } from "next/cache";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+/* ================= SAVE RESUME ================= */
 export async function saveResume(content) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -18,28 +16,17 @@ export async function saveResume(content) {
 
   if (!user) throw new Error("User not found");
 
-  try {
-    const resume = await db.resume.upsert({
-      where: {
-        userId: user.id,
-      },
-      update: {
-        content,
-      },
-      create: {
-        userId: user.id,
-        content,
-      },
-    });
+  const resume = await db.resume.upsert({
+    where: { userId: user.id },
+    update: { content },
+    create: { userId: user.id, content },
+  });
 
-    revalidatePath("/resume");
-    return resume;
-  } catch (error) {
-    console.error("Error saving resume:", error);
-    throw new Error("Failed to save resume");
-  }
+  revalidatePath("/resume");
+  return resume;
 }
 
+/* ================= GET RESUME ================= */
 export async function getResume() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -51,48 +38,98 @@ export async function getResume() {
   if (!user) throw new Error("User not found");
 
   return await db.resume.findUnique({
-    where: {
-      userId: user.id,
-    },
+    where: { userId: user.id },
   });
 }
 
+/* ================= AI IMPROVE ================= */
 export async function improveWithAI({ current, type }) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
-    include: {
-      industryInsight: true,
-    },
   });
 
   if (!user) throw new Error("User not found");
 
-  const prompt = `
-    As an expert resume writer, improve the following ${type} description for a ${user.industry} professional.
-    Make it more impactful, quantifiable, and aligned with industry standards.
-    Current content: "${current}"
+  let prompt = "";
 
-    Requirements:
-    1. Use action verbs
-    2. Include metrics and results where possible
-    3. Highlight relevant technical skills
-    4. Keep it concise but detailed
-    5. Focus on achievements over responsibilities
-    6. Use industry-specific keywords
-    
-    Format the response as a single paragraph without any additional text or explanations.
-  `;
+  if (type === "experience") {
+    prompt = `
+Improve this work experience:
+
+"${current}"
+
+Make it:
+- Professional
+- Achievement focused
+- Use strong action verbs
+- Add measurable impact
+    `;
+  } else if (type === "education") {
+    prompt = `
+Improve this education section:
+
+"${current}"
+
+Make it:
+- Clean and professional
+- Highlight key skills and learning
+    `;
+  } else if (type === "project") {
+    prompt = `
+Improve this project:
+
+"${current}"
+
+Make it:
+- Technical and impressive
+- Mention technologies
+- Show impact and scalability
+    `;
+  } else {
+    prompt = `
+Improve this resume content:
+
+"${current}"
+
+Make it professional and strong.
+    `;
+  }
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const improvedContent = response.text().trim();
-    return improvedContent;
+    const res = await groq.chat.completions.create({
+  model: "llama-3.3-70b-versatile",
+
+  messages: [
+    {
+      role: "system", // 👈 ADD THIS BLOCK (IMPORTANT)
+      content: `
+You are a senior FAANG-level resume expert.
+
+Rules:
+- Improve content professionally
+- Add achievements
+- Add metrics if possible
+- Use strong action verbs
+- Make ATS-friendly
+Return ONLY improved text.
+      `,
+    },
+
+    {
+      role: "user",
+      content: prompt, // 👈 your input stays here
+    },
+  ],
+});
+
+    return res.choices[0].message.content.trim();
   } catch (error) {
-    console.error("Error improving content:", error);
-    throw new Error("Failed to improve content");
+    console.log("Groq failed:", error.message);
+
+    // 🚨 SAFE FALLBACK (never breaks UI)
+    return current || "Unable to improve content right now.";
   }
 }
