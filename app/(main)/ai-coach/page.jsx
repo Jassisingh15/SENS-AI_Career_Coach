@@ -11,6 +11,11 @@ export default function Page() {
   const [chatHistory, setChatHistory] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
 
+  // ON MOBILE, THE SIDEBAR IS HIDDEN BY DEFAULT.
+  // WE TOGGLE THIS TO SHOW/HIDE IT. ON DESKTOP IT IS ALWAYS VISIBLE
+  // (WE HANDLE THAT WITH THE "md:flex" CLASS BELOW, NOT WITH THIS STATE).
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const bottomRef = useRef(null);
   const { user } = useUser();
 
@@ -61,8 +66,7 @@ export default function Page() {
 
   // DEFAULT THEME
   const [theme, setTheme] = useState("pink");
-  const [userData, setUserData] =
-  useState(null);
+  const [userData, setUserData] = useState(null);
 
   // CHANGE THEME
   const changeTheme = () => {
@@ -70,30 +74,34 @@ export default function Page() {
 
     const currentIndex = themeKeys.indexOf(theme);
 
-    const nextIndex =
-      (currentIndex + 1) % themeKeys.length;
+    const nextIndex = (currentIndex + 1) % themeKeys.length;
 
     setTheme(themeKeys[nextIndex]);
   };
 
-  // AUTO SCROLL
+  // LOAD USER DATA ONCE WHEN THE PAGE OPENS
   useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const res = await fetch("/api/user-data");
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user-data");
 
-      const data = await res.json();
+        const data = await res.json();
 
-      console.log("USER DATA:", data);
+        console.log("USER DATA:", data);
 
-      setUserData(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+        setUserData(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-  fetchUser();
-}, []);
+    fetchUser();
+  }, []);
+
+  // EVERY TIME A NEW MESSAGE ARRIVES, SCROLL DOWN SO THE LATEST ONE IS VISIBLE
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   // QUICK PROMPT
   const handleQuickPrompt = async (text) => {
@@ -134,10 +142,10 @@ export default function Page() {
           "Content-Type": "application/json",
         },
 
-      body: JSON.stringify({
-  input: text,
-  industry: userData?.industry,
-}),
+        body: JSON.stringify({
+          input: text,
+          industry: userData?.industry,
+        }),
       });
 
       const data = await res.json();
@@ -159,8 +167,8 @@ export default function Page() {
                 ...chat,
                 messages: finalMessages,
               }
-            : chat
-        )
+            : chat,
+        ),
       );
     } catch (error) {
       console.log(error);
@@ -214,10 +222,10 @@ export default function Page() {
           "Content-Type": "application/json",
         },
 
-    body: JSON.stringify({
-  input: userText,
-  industry: userData?.industry,
-}),
+        body: JSON.stringify({
+          input: userText,
+          industry: userData?.industry,
+        }),
       });
 
       const data = await res.json();
@@ -239,8 +247,8 @@ export default function Page() {
                 ...chat,
                 messages: finalMessages,
               }
-            : chat
-        )
+            : chat,
+        ),
       );
     } catch (error) {
       console.log(error);
@@ -249,167 +257,212 @@ export default function Page() {
     setLoading(false);
   };
 
- return (
-  <div className="h-screen bg-[#030712] text-white flex overflow-hidden">
-
-    {/* SIDEBAR */}
-    <div className="w-[250px] bg-[#071019] border-r border-white/10 flex flex-col p-5">
-
-      <div>
-        <h1 className={`text-4xl font-black bg-gradient-to-r ${themes[theme].primary} bg-clip-text text-transparent`}>
-          SENSAI
-        </h1>
-
-        <p className="text-xs text-gray-500 mt-2">
-          AI Career Guidance System
-        </p>
-      </div>
-
-      <button
-        onClick={() => {
-          setMessages([]);
-          setCurrentChatId(null);
-        }}
-        className={`mt-8 py-3 rounded-2xl text-black text-sm font-bold ${themes[theme].button}`}
+  return (
+    // ======================================================================
+    // OUTER WRAPPER
+    // "flex-col" on mobile = sidebar and chat stack on TOP of each other
+    // "md:flex-row" on desktop (768px+) = sidebar and chat sit SIDE BY SIDE
+    // "h-dvh" = full screen height that works correctly on mobile browsers
+    // ======================================================================
+    <div className="flex flex-col md:flex-row h-dvh bg-[#030712] text-white overflow-hidden">
+      {/* ==================================================================
+          SIDEBAR
+          On mobile: only shown when sidebarOpen is true (normal block,
+          pushes the chat down, never floats on top of it).
+          On desktop: "md:flex" forces it to always show, side by side.
+      ================================================================== */}
+      <div
+        className={`
+          ${sidebarOpen ? "flex" : "hidden"} md:flex
+          flex-col w-full md:w-[250px] md:shrink-0
+          max-h-[50vh] md:max-h-none overflow-y-auto
+          bg-[#071019] border-b md:border-b-0 md:border-r border-white/10 p-5
+        `}
       >
-        + New Chat
-      </button>
+        <div className="flex items-center justify-between">
+          <h1
+            className={`text-3xl sm:text-4xl font-black bg-gradient-to-r ${themes[theme].primary} bg-clip-text text-transparent`}
+          >
+            SENSAI
+          </h1>
 
-      <div className="mt-8 flex-1 overflow-y-auto">
-        <p className="text-[10px] tracking-[4px] text-gray-600 mb-4">
-          CHAT HISTORY
-        </p>
-
-        <div className="space-y-2">
-          {chatHistory.map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() => {
-                setCurrentChatId(chat.id);
-                setMessages(chat.messages);
-              }}
-              className="w-full text-left p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05]"
-            >
-              <p className="truncate text-xs text-gray-300">
-                {chat.title}
-              </p>
-            </button>
-          ))}
+          {/* CLOSE BUTTON - ONLY NEEDED ON MOBILE */}
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden text-gray-400 hover:text-white text-xl px-2"
+          >
+            ✕
+          </button>
         </div>
-      </div>
 
-    </div>
-
-    {/* MAIN AREA */}
-    <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-
-      {/* HEADER */}
-      <div className="h-[65px] min-h-[65px] border-b border-white/10 px-6 flex items-center justify-between z-10">
-
-        <div>
-          <h2 className="text-lg font-bold">AI Career Assistant</h2>
-          <p className="text-xs text-gray-500">Personalized AI guidance</p>
-        </div>
+        <p className="text-xs text-gray-500 mt-2">AI Career Guidance System</p>
 
         <button
-          onClick={changeTheme}
-          className={`px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs ${themes[theme].text}`}
+          onClick={() => {
+            setMessages([]);
+            setCurrentChatId(null);
+            setSidebarOpen(false);
+          }}
+          className={`mt-6 py-3 rounded-2xl text-black text-sm font-bold ${themes[theme].button}`}
         >
-          Change Theme
+          + New Chat
         </button>
 
+        <div className="mt-6">
+          <p className="text-[10px] tracking-[4px] text-gray-600 mb-4">
+            CHAT HISTORY
+          </p>
+
+          <div className="space-y-2">
+            {chatHistory.map((chat) => (
+              <button
+                key={chat.id}
+                onClick={() => {
+                  setCurrentChatId(chat.id);
+                  setMessages(chat.messages);
+                  setSidebarOpen(false);
+                }}
+                className="w-full text-left p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05]"
+              >
+                <p className="truncate text-xs text-gray-300">{chat.title}</p>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* CHAT AREA */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-
-        {/* HERO */}
-        {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-center px-4">
-
-            <h1 className={`text-5xl font-black bg-gradient-to-r ${themes[theme].primary} bg-clip-text text-transparent`}>
-              SENSAI AI
-            </h1>
-
-            <p className="mt-5 max-w-xl text-gray-400">
-              Intelligent AI career guidance assistant
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 mt-10 w-full max-w-3xl">
-
-              {[
-                "Generate career roadmap",
-                "Analyze my skills",
-                "Suggest AI careers",
-                "Interview preparation tips",
-              ].map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleQuickPrompt(item)}
-                  className="p-4 rounded-2xl bg-white/[0.03] border border-white/10"
-                >
-                  {item}
-                </button>
-              ))}
-
-            </div>
-
-          </div>
-        )}
-
-        {/* MESSAGES */}
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[70%] px-4 py-2 rounded-xl text-sm whitespace-pre-wrap
-              ${msg.role === "user"
-                ? `${themes[theme].button} text-black`
-                : "bg-[#111827] border border-white/10"
-              }`}
+      {/* ==================================================================
+          MAIN CHAT AREA
+          "flex-1" = takes up all remaining space next to (or below) sidebar
+          "min-h-0" = REQUIRED so the messages list can scroll on its own
+          instead of growing forever and pushing the input box off screen
+      ================================================================== */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* HEADER */}
+        <div className="shrink-0 h-16 border-b border-white/10 px-4 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* HAMBURGER BUTTON - ONLY SHOWS ON MOBILE, OPENS THE SIDEBAR ABOVE */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden text-2xl leading-none px-1"
             >
-              {msg.text}
+              ☰
+            </button>
+
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold truncate">
+                AI Career Assistant
+              </h2>
+              <p className="text-xs text-gray-500 truncate hidden sm:block">
+                Personalized AI guidance
+              </p>
             </div>
           </div>
-        ))}
-
-        {loading && (
-          <div className="text-gray-400 text-sm">Thinking...</div>
-        )}
-
-        <div ref={bottomRef}></div>
-
-      </div>
-
-      {/* INPUT FIXED */}
-      <div className="p-4 border-t border-white/10 bg-[#030712]">
-
-        <div className="max-w-4xl mx-auto flex gap-3 items-center bg-[#111827] p-3 rounded-xl border border-white/10">
-
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Ask anything about your career..."
-            className="flex-1 bg-transparent outline-none text-sm"
-          />
 
           <button
-            onClick={sendMessage}
-            className={`px-5 py-2 rounded-lg text-black text-sm font-semibold ${themes[theme].button}`}
+            onClick={changeTheme}
+            className={`px-3 sm:px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs whitespace-nowrap ${themes[theme].text}`}
           >
-            Send
+            Change Theme
           </button>
-
         </div>
 
+        {/* MESSAGES LIST - THIS IS THE ONLY PART THAT SCROLLS */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-4">
+          {/* HERO - SHOWN ONLY WHEN THERE ARE NO MESSAGES YET */}
+          {messages.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-center px-2">
+              <h1
+                className={`text-3xl sm:text-5xl font-black bg-gradient-to-r ${themes[theme].primary} bg-clip-text text-transparent`}
+              >
+                SENSAI AI
+              </h1>
+
+              <p className="mt-4 max-w-xl text-sm sm:text-base text-gray-400">
+                Intelligent AI career guidance assistant
+              </p>
+
+              {/* ONE COLUMN ON MOBILE, TWO COLUMNS ON LARGER SCREENS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-3xl">
+                {[
+                  "Generate career roadmap",
+                  "Analyze my skills",
+                  "Suggest AI careers",
+                  "Interview preparation tips",
+                ].map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleQuickPrompt(item)}
+                    className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-sm text-left"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CHAT BUBBLES */}
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[85%] sm:max-w-[70%] px-4 py-2 rounded-xl text-sm whitespace-pre-wrap break-words
+                ${
+                  msg.role === "user"
+                    ? `${themes[theme].button} text-black`
+                    : "bg-[#111827] border border-white/10"
+                }`}
+              >
+                {msg.text}
+              </div>
+            </div>
+          ))}
+
+          {loading && <div className="text-gray-400 text-sm">Thinking...</div>}
+
+          {/* EMPTY DIV USED AS A SCROLL TARGET - KEEPS LATEST MESSAGE IN VIEW */}
+          <div ref={bottomRef}></div>
+        </div>
+
+        {/* INPUT BAR - "shrink-0" KEEPS IT PINNED AT THE BOTTOM, ALWAYS VISIBLE */}
+        <div className="shrink-0 p-3 sm:p-4 border-t border-white/10 bg-[#0a0f1a]">
+          <div
+            className={`
+              max-w-4xl mx-auto flex gap-2 items-center
+              bg-[#111827] p-2 sm:p-2.5 rounded-2xl
+              border border-white/10
+              shadow-lg shadow-black/30
+              focus-within:border-white/25 focus-within:ring-2 focus-within:ring-white/10
+              transition-colors
+            `}
+          >
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Ask anything about your career..."
+              className="flex-1 min-w-0 bg-transparent outline-none text-sm px-2 py-2 placeholder:text-gray-500"
+            />
+
+            <button
+              onClick={sendMessage}
+              disabled={!input.trim()}
+              className={`
+                px-4 sm:px-5 py-2.5 rounded-xl text-black text-sm font-semibold shrink-0
+                shadow-md transition-transform active:scale-95
+                disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
+                ${themes[theme].button}
+              `}
+            >
+              Send
+            </button>
+          </div>
+        </div>
       </div>
-
     </div>
-
-  </div>
-);
+  );
 }

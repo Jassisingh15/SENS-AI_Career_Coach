@@ -35,9 +35,13 @@ export default function RootLayout({ children }) {
             <main className="min-h-screen">{children}</main>
             <Toaster richColors />
 
-            <footer className="bg-muted/50 py-12">
-              <div className="container mx-auto px-4 text-center text-gray-200">
-                <p>Made with 💗 by Jasvinder Singh</p>
+            {/* FOOTER - border-t separates it from page content, 
+                year updates itself automatically every year */}
+            <footer className="border-t border-white/10 bg-muted/50 py-8">
+              <div className="container mx-auto px-4 text-center text-sm text-gray-400">
+                <p>
+                  © {new Date().getFullYear()} AI Career Coach — Made with 💗 by Jasvinder Singh
+                </p>
               </div>
             </footer>
           </ThemeProvider>

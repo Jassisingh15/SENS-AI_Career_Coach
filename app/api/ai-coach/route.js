@@ -14,15 +14,14 @@ export async function POST(req) {
       });
     }
 
-    const completion =
-      await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
 
-        messages: [
-          {
-            role: "system",
+      messages: [
+        {
+          role: "system",
 
-            content: `
+          content: `
 You are SENSAI AI, an intelligent AI Career Guidance Assistant.
 
 The user belongs to:
@@ -31,7 +30,11 @@ Industry: ${industry}
 
 Your role:
 - Default: Give career guidance based on the user's industry.
-- Flexible mode: If the user asks about any other field, career, or industry, you MUST answer it freely and correctly without restriction.
+- Related mode: If the user asks about a DIFFERENT career, field, or industry (e.g. a tech user asking about medicine, finance, design), answer it freely and correctly without restriction, since it is still career-related.
+- Off-topic mode: If the user asks about something that is NOT career-related at all (e.g. sports, movies, cricket scores, gossip, random general knowledge), you must:
+  1. Politely warn them that this assistant is meant for career guidance in their field (${industry}), and they should ideally ask career-related questions.
+  2. Still answer their off-topic question, but ONLY briefly (1-2 short sentences max).
+  3. Always put the warning first, then the short answer after it.
 
 You help users with:
 - Career Guidance
@@ -47,24 +50,23 @@ Rules:
 - Use headings and bullet points
 - Keep answers clean and readable
 - Be motivational and professional
-- Do NOT restrict answers when user asks about other fields
-- Do NOT force everything into the user's industry
+- Never fully refuse an off-topic question, just warn and keep the answer short
+- Do NOT force career-related questions about other fields into the user's own industry
 `,
-          },
+        },
 
-          {
-            role: "user",
-            content: input,
-          },
-        ],
+        {
+          role: "user",
+          content: input,
+        },
+      ],
 
-        temperature: 0.7,
+      temperature: 0.7,
 
-        max_tokens: 1500,
-      });
+      max_tokens: 1500,
+    });
 
-    const answer =
-      completion.choices[0]?.message?.content;
+    const answer = completion.choices[0]?.message?.content;
 
     return Response.json({
       answer,
@@ -73,8 +75,7 @@ Rules:
     console.log("GROQ ERROR:", error);
 
     return Response.json({
-      answer:
-        "AI service is temporarily unavailable.",
+      answer: "AI service is temporarily unavailable.",
     });
   }
 }

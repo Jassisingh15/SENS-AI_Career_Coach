@@ -5,12 +5,13 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-
+import { useUser } from "@clerk/nextjs"; // 👈 sirf useUser chahiye ab
 
 const HeroSection = () => {
   const imageRef = useRef(null);
   const router = useRouter();
+
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     const imageElement = imageRef.current;
@@ -30,6 +31,15 @@ const HeroSection = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // 👇 login nahi hai to asli sign-in page pe le jao (popup nahi)
+  const handleTryAiCoach = () => {
+    if (isSignedIn) {
+      router.push("/ai-coach");
+    } else {
+      router.push("/sign-in");
+    }
+  };
+
   return (
     <section className="w-full pt-36 md:pt-48 pb-10">
       <div className="space-y-6 text-center">
@@ -40,7 +50,9 @@ const HeroSection = () => {
             Professional Success
           </h1>
           <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl">
-            Get personalized career guidance, AI-generated resumes, industry insights, and interview preparation tailored to your skills and goals.
+            Get personalized career guidance, AI-generated resumes, industry
+            insights, and interview preparation tailored to your skills and
+            goals.
           </p>
         </div>
         <div className="flex justify-center space-x-4">
@@ -49,9 +61,7 @@ const HeroSection = () => {
               Get Started
             </Button>
           </Link>
-            <Button onClick={() => router.push("/ai-coach")}>
-             Try AI Coach
-            </Button>
+          <Button onClick={handleTryAiCoach}>Try AI Coach</Button>
         </div>
         <div className="hero-image-wrapper mt-5 md:mt-0">
           <div ref={imageRef} className="hero-image">

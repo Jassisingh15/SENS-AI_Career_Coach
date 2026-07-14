@@ -80,7 +80,7 @@ export async function updateUser(data) {
     });
 
     revalidatePath("/dashboard");
-    return result.updatedUser;
+    return { success: true, data: result.updatedUser };
   } catch (error) {
     console.error("Error updating user:", error.message);
     throw new Error("Failed to update profile");
