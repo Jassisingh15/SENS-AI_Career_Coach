@@ -8,10 +8,7 @@ export async function POST() {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await db.user.findUnique({
@@ -19,10 +16,7 @@ export async function POST() {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const completion = await groq.chat.completions.create({
@@ -139,13 +133,12 @@ Experience: ${user.experience}
     const roadmap = completion.choices[0].message.content;
 
     return NextResponse.json({ roadmap });
-
   } catch (error) {
     console.error("Roadmap API Error:", error);
 
     return NextResponse.json(
       { error: "Failed to generate roadmap" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
