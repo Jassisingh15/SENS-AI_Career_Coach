@@ -100,12 +100,12 @@ Make it professional and strong.
 
   try {
     const res = await groq.chat.completions.create({
-  model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
 
-  messages: [
-    {
-      role: "system", // 👈 ADD THIS BLOCK (IMPORTANT)
-      content: `
+      messages: [
+        {
+          role: "system", // 👈 ADD THIS BLOCK (IMPORTANT)
+          content: `
 You are a senior FAANG-level resume expert.
 
 Rules:
@@ -116,14 +116,14 @@ Rules:
 - Make ATS-friendly
 Return ONLY improved text.
       `,
-    },
+        },
 
-    {
-      role: "user",
-      content: prompt, // 👈 your input stays here
-    },
-  ],
-});
+        {
+          role: "user",
+          content: prompt, // 👈 your input stays here
+        },
+      ],
+    });
 
     return res.choices[0].message.content.trim();
   } catch (error) {

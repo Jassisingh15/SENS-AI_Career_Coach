@@ -20,7 +20,7 @@ export async function generateQuiz({ industry, subfield } = {}) {
 
   try {
     const res = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [
         {
           role: "system",
@@ -61,7 +61,10 @@ Return ONLY this JSON format:
     let text = res.choices[0].message.content;
 
     // clean markdown if any
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    text = text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
     let parsed;
 
@@ -104,8 +107,7 @@ Return ONLY this JSON format:
             "Operating system",
           ],
           correctAnswer: "Frontend library",
-          explanation:
-            "React is a JavaScript library for building UI.",
+          explanation: "React is a JavaScript library for building UI.",
         },
       ],
     };
