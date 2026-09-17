@@ -7,7 +7,7 @@ import { groq } from "@/lib/groq";
 /* ================= AI INSIGHTS ================= */
 export const generateAIInsights = async (industry) => {
   try {
-    const res = await groq.chat.completions.create({
+    const completion = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
       messages: [
         {
@@ -43,9 +43,10 @@ Return ONLY JSON:
       temperature: 0.7,
     });
 
-    const text = res.choices[0].message.content;
+    const responseText = completion.choices[0].message.content;
+    const cleanJson = responseText.replace(/```json|```/g, "").trim();
 
-    return JSON.parse(text.replace(/```json|```/g, "").trim());
+    return JSON.parse(cleanJson);
   } catch (error) {
     console.log("❌ GROQ ERROR:", error);
 
@@ -84,16 +85,16 @@ export async function getIndustryInsights() {
 
   console.log("USER INDUSTRY:", industry);
 
-  let insight = await db.industryInsight.findFirst({
+  let industryInsight = await db.industryInsight.findFirst({
     where: {
       industry,
     },
   });
 
-  if (!insight) {
+  if (!industryInsight) {
     const data = await generateAIInsights(industry);
 
-    insight = await db.industryInsight.create({
+    industryInsight = await db.industryInsight.create({
       data: {
         industry,
         ...data,
@@ -101,5 +102,5 @@ export async function getIndustryInsights() {
     });
   }
 
-  return insight;
+  return industryInsight;
 }

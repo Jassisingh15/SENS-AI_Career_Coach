@@ -56,63 +56,60 @@ export default function Quiz() {
   };
 
   const calculateScore = () => {
-  let correct = 0;
+    let correct = 0;
 
-  answers.forEach((answer, index) => {
-    const correctAnswer = quizData.questions[index].correctAnswer;
+    answers.forEach((answer, index) => {
+      const correctAnswer = quizData.questions[index].correctAnswer;
 
-    // 🔥 FIX: match option letter (A, B, C, D)
-    if (answer?.[0] === correctAnswer) {
-      correct++;
+      // match option letter (A, B, C, D)
+      if (answer?.[0] === correctAnswer) {
+        correct++;
+      }
+    });
+
+    return (correct / quizData.questions.length) * 100;
+  };
+
+  const finishQuiz = async () => {
+    const score = calculateScore();
+
+    const formattedQuestions = quizData.questions.map((q, index) => {
+      const userAnswer = answers[index];
+      const isCorrect = userAnswer?.[0] === q.correctAnswer;
+
+      return {
+        question: q.question,
+        userAnswer: userAnswer || "Not answered",
+        answer: q.correctAnswer,
+        explanation: q.explanation,
+        isCorrect,
+      };
+    });
+
+    try {
+      await saveQuizResultFn(
+        quizData.questions,
+        answers,
+        score
+      );
+
+      setQuizResult({
+        questions: formattedQuestions,
+        quizScore: score,
+      });
+
+      toast.success("Quiz completed!");
+    } catch (error) {
+      console.log(error);
+
+      setQuizResult({
+        questions: formattedQuestions,
+        quizScore: score,
+      });
+
+      toast.error("Saved locally");
     }
-  });
-
-  return (correct / quizData.questions.length) * 100;
-};
-
-const finishQuiz = async () => {
-  const score = calculateScore();
-
-  // 🔥 IMPORTANT FIX (questions format karna)
-  const formattedQuestions = quizData.questions.map((q, index) => {
-    const userAnswer = answers[index];
-    const isCorrect = userAnswer?.[0] === q.correctAnswer;
-
-    return {
-      question: q.question,
-      userAnswer: userAnswer || "Not answered",
-      answer: q.correctAnswer,
-      explanation: q.explanation,
-      isCorrect,
-    };
-  });
-
-  try {
-    await saveQuizResultFn(
-      quizData.questions,
-      answers,
-      score
-    );
-
-    // ✅ result show
-    setQuizResult({
-      questions: formattedQuestions,
-      quizScore: score,
-    });
-
-    toast.success("Quiz completed!");
-  } catch (error) {
-    console.log(error);
-
-    // even if error → still show result
-    setQuizResult({
-      questions: formattedQuestions,
-      quizScore: score,
-    });
-
-    toast.error("Saved locally");
-  }
-};
+  };
 
   const startNewQuiz = () => {
     setCurrentQuestion(0);
@@ -121,15 +118,15 @@ const finishQuiz = async () => {
     setQuizResult(null);
 
     generateQuizFn({
-  industry: "finance", // test
-});
+      industry: "finance",
+    });
   };
 
   if (generatingQuiz) {
-    return <BarLoader className="mt-4" width={"100%"} color="gray" />;
+    return <BarLoader className="mt-4" width={"100%"} color="#7C3AED" />;
   }
 
-  // ✅ RESULT SCREEN (FIXED)
+  // RESULT SCREEN
   if (quizResult) {
     return (
       <div className="mx-2">
@@ -141,13 +138,13 @@ const finishQuiz = async () => {
   // START SCREEN
   if (!quizData?.questions?.length) {
     return (
-      <Card className="mx-2">
+      <Card className="mx-2 border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
         <CardHeader>
-          <CardTitle>Ready to test your knowledge?</CardTitle>
+          <CardTitle className="text-xl md:text-2xl text-white">Ready to test your knowledge?</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            This quiz contains 10 questions specific to your industry and skills.
+          <p className="text-slate-300">
+            This quiz contains 10 tailored questions specific to your industry and role requirements.
           </p>
         </CardContent>
         <CardFooter>
@@ -159,6 +156,7 @@ const finishQuiz = async () => {
               })
             }
             className="w-full"
+            size="lg"
           >
             Start Quiz
           </Button>
@@ -170,42 +168,54 @@ const finishQuiz = async () => {
   const question = quizData.questions[currentQuestion];
 
   return (
-    <Card className="mx-2">
+    <Card className="mx-2 border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="text-xl text-white">
           Question {currentQuestion + 1} of {quizData.questions.length}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <p className="text-lg font-medium">{question.question}</p>
+      <CardContent className="space-y-5">
+        <p className="text-lg font-semibold text-slate-100">{question.question}</p>
 
         <RadioGroup
           onValueChange={handleAnswer}
           value={answers[currentQuestion]}
-          className="space-y-2"
+          className="space-y-3"
         >
           {question.options.map((option, index) => (
-            <div key={index} className="flex items-center space-x-2">
+            <div
+              key={index}
+              className={`flex items-center space-x-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
+                answers[currentQuestion] === option
+                  ? "border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)]"
+                  : "border-white/10 bg-slate-950/40 hover:border-white/20 hover:bg-white/5"
+              }`}
+            >
               <RadioGroupItem value={option} id={`option-${index}`} />
-              <Label htmlFor={`option-${index}`}>{option}</Label>
+              <Label
+                htmlFor={`option-${index}`}
+                className="text-slate-200 cursor-pointer font-normal text-sm leading-relaxed"
+              >
+                {option}
+              </Label>
             </div>
           ))}
         </RadioGroup>
 
         {showExplanation && (
-          <div className="mt-4 p-4 bg-muted rounded-lg">
-            <p className="font-medium">Explanation:</p>
-            <p className="text-muted-foreground">{question.explanation}</p>
+          <div className="mt-4 p-4 bg-slate-950/70 border border-white/10 rounded-xl backdrop-blur-md">
+            <p className="font-semibold text-indigo-300 mb-1">Explanation:</p>
+            <p className="text-slate-300 text-sm leading-relaxed">{question.explanation}</p>
           </div>
         )}
       </CardContent>
 
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between pt-4 border-t border-white/10">
         {!showExplanation && (
           <Button
             onClick={() => setShowExplanation(true)}
-            variant="outline"
+            variant="secondary"
             disabled={!answers[currentQuestion]}
           >
             Show Explanation

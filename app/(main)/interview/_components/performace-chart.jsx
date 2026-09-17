@@ -33,29 +33,29 @@ export default function PerformanceChart({ assessments }) {
   }, [assessments]);
 
   return (
-    <Card>
+    <Card className="border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
       <CardHeader>
-        <CardTitle className="gradient-title text-3xl md:text-4xl">
+        <CardTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
           Performance Trend
         </CardTitle>
-        <CardDescription>Your quiz scores over time</CardDescription>
+        <CardDescription className="text-slate-400">Your quiz score trajectory over time</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis domain={[0, 100]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <XAxis dataKey="date" stroke="#94A3B8" fontSize={12} />
+              <YAxis domain={[0, 100]} stroke="#94A3B8" fontSize={12} />
               <Tooltip
                 content={({ active, payload }) => {
                   if (active && payload?.length) {
                     return (
-                      <div className="bg-background border rounded-lg p-2 shadow-md">
-                        <p className="text-sm font-medium">
-                          Score: {payload[0].value}%
+                      <div className="rounded-xl border border-white/10 bg-slate-900/95 p-3 shadow-2xl backdrop-blur-xl">
+                        <p className="text-sm font-bold text-white">
+                          Score: <span className="text-emerald-400">{payload[0].value}%</span>
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-slate-400 mt-0.5">
                           {payload[0].payload.date}
                         </p>
                       </div>
@@ -67,8 +67,10 @@ export default function PerformanceChart({ assessments }) {
               <Line
                 type="monotone"
                 dataKey="score"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
+                stroke="#6366F1"
+                strokeWidth={3}
+                dot={{ fill: "#7C3AED", r: 5, strokeWidth: 2, stroke: "#080C14" }}
+                activeDot={{ fill: "#06B6D4", r: 7, strokeWidth: 2, stroke: "#080C14" }}
               />
             </LineChart>
           </ResponsiveContainer>

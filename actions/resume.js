@@ -37,7 +37,7 @@ export async function getResume() {
 
   if (!user) throw new Error("User not found");
 
-  return await db.resume.findUnique({
+  return db.resume.findUnique({
     where: { userId: user.id },
   });
 }
@@ -53,10 +53,10 @@ export async function improveWithAI({ current, type }) {
 
   if (!user) throw new Error("User not found");
 
-  let prompt = "";
+  let improvementPrompt = "";
 
   if (type === "experience") {
-    prompt = `
+    improvementPrompt = `
 Improve this work experience:
 
 "${current}"
@@ -68,7 +68,7 @@ Make it:
 - Add measurable impact
     `;
   } else if (type === "education") {
-    prompt = `
+    improvementPrompt = `
 Improve this education section:
 
 "${current}"
@@ -78,7 +78,7 @@ Make it:
 - Highlight key skills and learning
     `;
   } else if (type === "project") {
-    prompt = `
+    improvementPrompt = `
 Improve this project:
 
 "${current}"
@@ -89,7 +89,7 @@ Make it:
 - Show impact and scalability
     `;
   } else {
-    prompt = `
+    improvementPrompt = `
 Improve this resume content:
 
 "${current}"
@@ -99,7 +99,7 @@ Make it professional and strong.
   }
 
   try {
-    const res = await groq.chat.completions.create({
+    const completion = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
 
       messages: [
@@ -120,12 +120,12 @@ Return ONLY improved text.
 
         {
           role: "user",
-          content: prompt, // 👈 your input stays here
+          content: improvementPrompt, // 👈 your input stays here
         },
       ],
     });
 
-    return res.choices[0].message.content.trim();
+    return completion.choices[0].message.content.trim();
   } catch (error) {
     console.log("Groq failed:", error.message);
 

@@ -16,7 +16,7 @@ export async function generateCoverLetter(data) {
   if (!user) throw new Error("User not found");
 
   try {
-    const res = await groq.chat.completions.create({
+    const completion = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
       messages: [
         {
@@ -59,7 +59,7 @@ Output:
       temperature: 0.7,
     });
 
-    const content = res.choices[0].message.content.trim();
+    const content = completion.choices[0].message.content.trim();
 
     const coverLetter = await db.coverLetter.create({
       data: {
@@ -84,7 +84,7 @@ export async function improveCoverLetter(content) {
   if (!userId) throw new Error("Unauthorized");
 
   try {
-    const res = await groq.chat.completions.create({
+    const completion = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
       messages: [
         {
@@ -108,7 +108,7 @@ ${content}
       temperature: 0.7,
     });
 
-    return res.choices[0].message.content.trim();
+    return completion.choices[0].message.content.trim();
   } catch (error) {
     throw new Error("Failed to improve cover letter");
   }
@@ -125,7 +125,7 @@ export async function getCoverLetters() {
 
   if (!user) throw new Error("User not found");
 
-  return await db.coverLetter.findMany({
+  return db.coverLetter.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
   });
@@ -142,7 +142,7 @@ export async function getCoverLetter(id) {
 
   if (!user) throw new Error("User not found");
 
-  return await db.coverLetter.findFirst({
+  return db.coverLetter.findFirst({
     where: {
       id,
       userId: user.id,
@@ -161,7 +161,7 @@ export async function deleteCoverLetter(id) {
 
   if (!user) throw new Error("User not found");
 
-  return await db.coverLetter.delete({
+  return db.coverLetter.delete({
     where: { id },
   });
 }

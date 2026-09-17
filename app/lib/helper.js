@@ -1,16 +1,18 @@
-// Helper function to convert entries to markdown
+// Convert a resume section's entries into the markdown saved in the database.
 export function entriesToMarkdown(entries, type) {
-  if (!entries?.length) return "";
+  if (!entries?.length) {
+    return "";
+  }
 
-  return (
-    `## ${type}\n\n` +
-    entries
-      .map((entry) => {
-        const dateRange = entry.current
-          ? `${entry.startDate} - Present`
-          : `${entry.startDate} - ${entry.endDate}`;
-        return `### ${entry.title} @ ${entry.organization}\n${dateRange}\n\n${entry.description}`;
-      })
-      .join("\n\n")
-  );
+  const formattedEntries = entries.map((entry) => {
+    let dateRange = `${entry.startDate} - ${entry.endDate}`;
+
+    if (entry.current) {
+      dateRange = `${entry.startDate} - Present`;
+    }
+
+    return `### ${entry.title} @ ${entry.organization}\n${dateRange}\n\n${entry.description}`;
+  });
+
+  return `## ${type}\n\n${formattedEntries.join("\n\n")}`;
 }

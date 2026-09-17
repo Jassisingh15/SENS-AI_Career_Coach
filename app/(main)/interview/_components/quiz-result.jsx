@@ -13,47 +13,54 @@ export default function QuizResult({
   if (!result) return null;
 
   return (
-    <div className="mx-auto">
-      <h1 className="flex items-center gap-2 text-3xl gradient-title">
-        <Trophy className="h-6 w-6 text-yellow-500" />
+    <div className="mx-auto rounded-2xl border border-white/10 bg-slate-900/60 p-4 md:p-6 backdrop-blur-xl shadow-2xl space-y-6">
+      <h1 className="flex items-center gap-3 text-3xl font-extrabold bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
+        <Trophy className="h-7 w-7 text-amber-400" />
         Quiz Results
       </h1>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-0">
         {/* Score Overview */}
-        <div className="text-center space-y-2">
-          <h3 className="text-2xl font-bold">{result.quizScore.toFixed(1)}%</h3>
-          <Progress value={result.quizScore} className="w-full" />
+        <div className="text-center space-y-3 p-6 rounded-xl border border-white/10 bg-slate-950/50 backdrop-blur-md">
+          <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">Final Assessment Score</p>
+          <div className="text-4xl md:text-5xl font-black bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+            {result.quizScore.toFixed(1)}%
+          </div>
+          <Progress value={result.quizScore} className="w-full max-w-md mx-auto" />
         </div>
 
         {/* Improvement Tip */}
         {result.improvementTip && (
-          <div className="bg-muted p-4 rounded-lg">
-            <p className="font-medium">Improvement Tip:</p>
-            <p className="text-muted-foreground">{result.improvementTip}</p>
+          <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-slate-200 backdrop-blur-md">
+            <p className="font-semibold text-indigo-300 mb-1">💡 Improvement Tip:</p>
+            <p className="text-slate-300 text-sm leading-relaxed">{result.improvementTip}</p>
           </div>
         )}
 
         {/* Questions Review */}
         <div className="space-y-4">
-          <h3 className="font-medium">Question Review</h3>
+          <h3 className="text-lg font-bold text-white">Question Review</h3>
           {result.questions.map((q, index) => (
-            <div key={index} className="border rounded-lg p-4 space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-medium">{q.question}</p>
+            <div key={index} className="border border-white/10 bg-slate-950/40 rounded-xl p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-semibold text-slate-100 text-sm md:text-base">{q.question}</p>
                 {q.isCorrect ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                  <XCircle className="h-5 w-5 text-rose-400 flex-shrink-0 mt-0.5" />
                 )}
               </div>
-              <div className="text-sm text-muted-foreground">
-                <p>Your answer: {q.userAnswer}</p>
-                {!q.isCorrect && <p>Correct answer: {q.answer}</p>}
+              <div className="text-xs space-y-1">
+                <p className={q.isCorrect ? "text-emerald-400 font-medium" : "text-rose-400 font-medium"}>
+                  Your answer: {q.userAnswer}
+                </p>
+                {!q.isCorrect && (
+                  <p className="text-emerald-400 font-medium">Correct answer: {q.answer}</p>
+                )}
               </div>
-              <div className="text-sm bg-muted p-2 rounded">
-                <p className="font-medium">Explanation:</p>
-                <p>{q.explanation}</p>
+              <div className="text-xs bg-slate-900/80 border border-white/5 p-3 rounded-lg text-slate-300 space-y-1">
+                <p className="font-semibold text-indigo-300">Explanation:</p>
+                <p className="leading-relaxed">{q.explanation}</p>
               </div>
             </div>
           ))}
@@ -61,8 +68,8 @@ export default function QuizResult({
       </CardContent>
 
       {!hideStartNew && (
-        <CardFooter>
-          <Button onClick={onStartNew} className="w-full">
+        <CardFooter className="p-0 pt-4">
+          <Button onClick={onStartNew} className="w-full" size="lg">
             Start New Quiz
           </Button>
         </CardFooter>

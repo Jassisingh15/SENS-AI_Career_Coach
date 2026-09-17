@@ -15,11 +15,10 @@ export async function generateQuiz({ industry, subfield } = {}) {
 
   if (!user) throw new Error("User not found");
 
-  const finalIndustry = industry || user?.industry || "Technology";
-  const finalSubfield = subfield || finalIndustry;
+  const selectedIndustry = industry || user?.industry || "Technology";
 
   try {
-    const res = await groq.chat.completions.create({
+    const completion = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
       messages: [
         {
@@ -30,12 +29,12 @@ export async function generateQuiz({ industry, subfield } = {}) {
         {
           role: "user",
           content: `
-Generate 10 HIGH-QUALITY MCQ questions strictly for the "${finalIndustry}" industry.
+Generate 10 HIGH-QUALITY MCQ questions strictly for the "${selectedIndustry}" industry.
 
 Rules:
-- Questions MUST be related ONLY to ${finalIndustry}
+- Questions MUST be related ONLY to ${selectedIndustry}
 - Do NOT include software or frontend development unless the industry is Technology
-- Focus on real-world concepts, roles, and scenarios in ${finalIndustry}
+- Focus on real-world concepts, roles, and scenarios in ${selectedIndustry}
 - Each question must have 4 options (A, B, C, D)
 - Must be real interview-level (FAANG style)
 - Include explanation for each answer
@@ -58,10 +57,10 @@ Return ONLY this JSON format:
       temperature: 0.7,
     });
 
-    let text = res.choices[0].message.content;
+    let responseText = completion.choices[0].message.content;
 
     // clean markdown if any
-    text = text
+    responseText = responseText
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
@@ -69,7 +68,7 @@ Return ONLY this JSON format:
     let parsed;
 
     try {
-      parsed = JSON.parse(text);
+      parsed = JSON.parse(responseText);
     } catch (err) {
       console.log("JSON parse error from Groq");
       throw new Error("AI returned invalid format");
@@ -125,15 +124,15 @@ export async function saveQuizResult(questions, answers, score) {
 
   if (!user) throw new Error("User not found");
 
-  const questionResults = (questions || []).map((q, index) => ({
-    question: q?.question || "",
-    answer: q?.correctAnswer || "",
+  const questionResults = (questions || []).map((question, index) => ({
+    question: question?.question || "",
+    answer: question?.correctAnswer || "",
     userAnswer: answers?.[index] || "",
-    isCorrect: q?.correctAnswer === answers?.[index],
-    explanation: q?.explanation || "",
+    isCorrect: question?.correctAnswer === answers?.[index],
+    explanation: question?.explanation || "",
   }));
 
-  return await db.assessment.create({
+  return db.assessment.create({
     data: {
       userId: user.id,
       quizScore: score,
@@ -154,7 +153,7 @@ export async function getAssessments() {
 
   if (!user) throw new Error("User not found");
 
-  return await db.assessment.findMany({
+  return db.assessment.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
   });

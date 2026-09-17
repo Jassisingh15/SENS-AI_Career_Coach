@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 
 export default function Page() {
   const [input, setInput] = useState("");
@@ -12,143 +11,131 @@ export default function Page() {
   const [currentChatId, setCurrentChatId] = useState(null);
 
   // ON MOBILE, THE SIDEBAR IS HIDDEN BY DEFAULT.
-  // WE TOGGLE THIS TO SHOW/HIDE IT. ON DESKTOP IT IS ALWAYS VISIBLE
-  // (WE HANDLE THAT WITH THE "md:flex" CLASS BELOW, NOT WITH THIS STATE).
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const bottomRef = useRef(null);
-  const { user } = useUser();
 
   // THEMES
   const themes = {
     orange: {
-      primary: "from-orange-300 to-yellow-200",
-      button: "bg-orange-400 hover:bg-orange-300",
+      primary: "from-orange-400 to-amber-300",
+      button: "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600",
       glow: "bg-orange-500/10",
       text: "text-orange-300",
     },
 
     blue: {
-      primary: "from-blue-300 to-cyan-200",
-      button: "bg-blue-400 hover:bg-blue-300",
+      primary: "from-cyan-400 to-blue-400",
+      button: "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700",
       glow: "bg-blue-500/10",
       text: "text-blue-300",
     },
 
     green: {
-      primary: "from-green-300 to-emerald-200",
-      button: "bg-green-400 hover:bg-green-300",
+      primary: "from-emerald-400 to-teal-300",
+      button: "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700",
       glow: "bg-green-500/10",
       text: "text-green-300",
     },
 
     pink: {
-      primary: "from-pink-300 to-rose-200",
-      button: "bg-pink-400 hover:bg-pink-300",
+      primary: "from-pink-400 to-rose-300",
+      button: "bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700",
       glow: "bg-pink-500/10",
       text: "text-pink-300",
     },
 
     purple: {
-      primary: "from-purple-300 to-violet-200",
-      button: "bg-purple-400 hover:bg-purple-300",
+      primary: "from-violet-400 to-indigo-300",
+      button: "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700",
       glow: "bg-purple-500/10",
       text: "text-purple-300",
     },
 
     red: {
-      primary: "from-red-300 to-rose-200",
-      button: "bg-red-400 hover:bg-red-300",
+      primary: "from-rose-400 to-amber-300",
+      button: "bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700",
       glow: "bg-red-500/10",
       text: "text-red-300",
     },
   };
 
   // DEFAULT THEME
-  const [theme, setTheme] = useState("pink");
+  const [theme, setTheme] = useState("purple");
   const [userData, setUserData] = useState(null);
 
   // CHANGE THEME
   const changeTheme = () => {
     const themeKeys = Object.keys(themes);
-
     const currentIndex = themeKeys.indexOf(theme);
-
     const nextIndex = (currentIndex + 1) % themeKeys.length;
-
     setTheme(themeKeys[nextIndex]);
   };
 
-  // LOAD USER DATA ONCE WHEN THE PAGE OPENS
+  // Load the user's profile once so each AI request includes their industry.
   useEffect(() => {
-    const fetchUser = async () => {
+    const loadUserData = async () => {
       try {
-        const res = await fetch("/api/user-data");
-
-        const data = await res.json();
-
-        console.log("USER DATA:", data);
-
-        setUserData(data);
+        const response = await fetch("/api/user-data");
+        const user = await response.json();
+        setUserData(user);
       } catch (error) {
         console.log(error);
       }
     };
 
-    fetchUser();
+    loadUserData();
   }, []);
 
-  // EVERY TIME A NEW MESSAGE ARRIVES, SCROLL DOWN SO THE LATEST ONE IS VISIBLE
+  // SCROLL DOWN
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // QUICK PROMPT
-  const handleQuickPrompt = async (text) => {
+  // Add a new chat to the history
+  const getChatId = (messageText) => {
+    if (currentChatId) {
+      return currentChatId;
+    }
+
+    const newChatId = Date.now();
+    setCurrentChatId(newChatId);
+    setChatHistory((previousChats) => [
+      { id: newChatId, title: messageText, messages: [] },
+      ...previousChats,
+    ]);
+
+    return newChatId;
+  };
+
+  // Send text to AI
+  const sendChatMessage = async (messageText) => {
     const updatedMessages = [
       ...messages,
       {
         role: "user",
-        text,
+        text: messageText,
       },
     ];
 
     setMessages(updatedMessages);
-
     setLoading(true);
 
-    let chatId = currentChatId;
-
-    if (!chatId) {
-      chatId = Date.now();
-
-      setCurrentChatId(chatId);
-
-      setChatHistory((prev) => [
-        {
-          id: chatId,
-          title: text,
-          messages: [],
-        },
-        ...prev,
-      ]);
-    }
+    const chatId = getChatId(messageText);
 
     try {
-      const res = await fetch("/api/ai-coach", {
+      const response = await fetch("/api/ai-coach", {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
-          input: text,
+          input: messageText,
           industry: userData?.industry,
         }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
       const finalMessages = [
         ...updatedMessages,
@@ -160,15 +147,14 @@ export default function Page() {
 
       setMessages(finalMessages);
 
-      setChatHistory((prev) =>
-        prev.map((chat) =>
-          chat.id === chatId
-            ? {
-                ...chat,
-                messages: finalMessages,
-              }
-            : chat,
-        ),
+      setChatHistory((previousChats) =>
+        previousChats.map((chat) => {
+          if (chat.id !== chatId) {
+            return chat;
+          }
+
+          return { ...chat, messages: finalMessages };
+        }),
       );
     } catch (error) {
       console.log(error);
@@ -177,125 +163,45 @@ export default function Page() {
     setLoading(false);
   };
 
-  // SEND MESSAGE
+  const handleQuickPrompt = async (text) => {
+    await sendChatMessage(text);
+  };
+
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userText = input;
-
-    const updatedMessages = [
-      ...messages,
-      {
-        role: "user",
-        text: userText,
-      },
-    ];
-
-    setMessages(updatedMessages);
-
+    const messageText = input;
     setInput("");
-
-    setLoading(true);
-
-    let chatId = currentChatId;
-
-    if (!chatId) {
-      chatId = Date.now();
-
-      setCurrentChatId(chatId);
-
-      setChatHistory((prev) => [
-        {
-          id: chatId,
-          title: userText,
-          messages: [],
-        },
-        ...prev,
-      ]);
-    }
-
-    try {
-      const res = await fetch("/api/ai-coach", {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          input: userText,
-          industry: userData?.industry,
-        }),
-      });
-
-      const data = await res.json();
-
-      const finalMessages = [
-        ...updatedMessages,
-        {
-          role: "ai",
-          text: data.answer,
-        },
-      ];
-
-      setMessages(finalMessages);
-
-      setChatHistory((prev) =>
-        prev.map((chat) =>
-          chat.id === chatId
-            ? {
-                ...chat,
-                messages: finalMessages,
-              }
-            : chat,
-        ),
-      );
-    } catch (error) {
-      console.log(error);
-    }
-
-    setLoading(false);
+    await sendChatMessage(messageText);
   };
 
   return (
-    // ======================================================================
-    // OUTER WRAPPER
-    // "flex-col" on mobile = sidebar and chat stack on TOP of each other
-    // "md:flex-row" on desktop (768px+) = sidebar and chat sit SIDE BY SIDE
-    // "h-dvh" = full screen height that works correctly on mobile browsers
-    // ======================================================================
-    <div className="flex flex-col md:flex-row h-dvh bg-[#030712] text-white overflow-hidden">
-      {/* ==================================================================
-          SIDEBAR
-          On mobile: only shown when sidebarOpen is true (normal block,
-          pushes the chat down, never floats on top of it).
-          On desktop: "md:flex" forces it to always show, side by side.
-      ================================================================== */}
+    <div className="flex h-dvh flex-col overflow-hidden bg-slate-950 text-slate-100 md:flex-row">
+      {/* SIDEBAR */}
       <div
         className={`
           ${sidebarOpen ? "flex" : "hidden"} md:flex
-          flex-col w-full md:w-[250px] md:shrink-0
+          flex-col w-full md:w-[260px] md:shrink-0
           max-h-[50vh] md:max-h-none overflow-y-auto
-          bg-[#071019] border-b md:border-b-0 md:border-r border-white/10 p-5
+          border-b border-white/10 bg-slate-900/90 backdrop-blur-xl p-5 md:border-b-0 md:border-r
         `}
       >
         <div className="flex items-center justify-between">
           <h1
-            className={`text-3xl sm:text-4xl font-black bg-gradient-to-r ${themes[theme].primary} bg-clip-text text-transparent`}
+            className={`text-3xl font-black bg-gradient-to-r ${themes[theme].primary} bg-clip-text text-transparent`}
           >
             SENSAI
           </h1>
 
-          {/* CLOSE BUTTON - ONLY NEEDED ON MOBILE */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="md:hidden text-gray-400 hover:text-white text-xl px-2"
+            className="px-2 text-xl text-slate-400 hover:text-white md:hidden cursor-pointer"
           >
             ✕
           </button>
         </div>
 
-        <p className="text-xs text-gray-500 mt-2">AI Career Guidance System</p>
+        <p className="mt-1 text-xs text-slate-400 font-medium">AI Career Guidance System</p>
 
         <button
           onClick={() => {
@@ -303,17 +209,17 @@ export default function Page() {
             setCurrentChatId(null);
             setSidebarOpen(false);
           }}
-          className={`mt-6 py-3 rounded-2xl text-black text-sm font-bold ${themes[theme].button}`}
+          className={`mt-6 py-2.5 rounded-xl text-white text-sm font-semibold shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${themes[theme].button}`}
         >
           + New Chat
         </button>
 
         <div className="mt-6">
-          <p className="text-[10px] tracking-[4px] text-gray-600 mb-4">
-            CHAT HISTORY
+          <p className="text-[10px] font-bold tracking-[3px] text-slate-400 mb-3 uppercase">
+            Chat History
           </p>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {chatHistory.map((chat) => (
               <button
                 key={chat.id}
@@ -322,78 +228,72 @@ export default function Page() {
                   setMessages(chat.messages);
                   setSidebarOpen(false);
                 }}
-                className="w-full text-left p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05]"
+                className="w-full rounded-xl border border-white/5 bg-slate-950/40 p-2.5 text-left transition-colors hover:border-white/15 hover:bg-white/5 cursor-pointer"
               >
-                <p className="truncate text-xs text-gray-300">{chat.title}</p>
+                <p className="truncate text-xs text-slate-300 font-medium">{chat.title}</p>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ==================================================================
-          MAIN CHAT AREA
-          "flex-1" = takes up all remaining space next to (or below) sidebar
-          "min-h-0" = REQUIRED so the messages list can scroll on its own
-          instead of growing forever and pushing the input box off screen
-      ================================================================== */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      {/* MAIN CHAT AREA */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-slate-950/60">
         {/* HEADER */}
-        <div className="shrink-0 h-16 border-b border-white/10 px-4 flex items-center justify-between">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-slate-900/80 backdrop-blur-xl px-4">
           <div className="flex items-center gap-3 min-w-0">
-            {/* HAMBURGER BUTTON - ONLY SHOWS ON MOBILE, OPENS THE SIDEBAR ABOVE */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden text-2xl leading-none px-1"
+              className="md:hidden text-2xl leading-none px-1 text-slate-300 hover:text-white cursor-pointer"
             >
               ☰
             </button>
 
             <div className="min-w-0">
-              <h2 className="text-base sm:text-lg font-bold truncate">
+              <h2 className="text-base sm:text-lg font-bold text-white truncate">
                 AI Career Assistant
               </h2>
-              <p className="text-xs text-gray-500 truncate hidden sm:block">
-                Personalized AI guidance
+              <p className="hidden truncate text-xs text-slate-400 sm:block">
+                Context-aware coaching for your industry
               </p>
             </div>
           </div>
 
           <button
             onClick={changeTheme}
-            className={`px-3 sm:px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs whitespace-nowrap ${themes[theme].text}`}
+            className="whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white transition-all cursor-pointer font-medium"
           >
-            Change Theme
+            Switch Accent
           </button>
         </div>
 
-        {/* MESSAGES LIST - THIS IS THE ONLY PART THAT SCROLLS */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-4">
-          {/* HERO - SHOWN ONLY WHEN THERE ARE NO MESSAGES YET */}
+        {/* MESSAGES LIST */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 space-y-4">
+          {/* EMPTY STATE */}
           {messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center text-center px-2">
+            <div className="h-full flex flex-col items-center justify-center text-center px-4 py-8">
+              <div className="pointer-events-none absolute h-64 w-64 rounded-full bg-violet-600/10 blur-3xl -z-10" />
               <h1
                 className={`text-3xl sm:text-5xl font-black bg-gradient-to-r ${themes[theme].primary} bg-clip-text text-transparent`}
               >
-                SENSAI AI
+                SENSAI AI COACH
               </h1>
 
-              <p className="mt-4 max-w-xl text-sm sm:text-base text-gray-400">
-                Intelligent AI career guidance assistant
+              <p className="mt-3 max-w-lg text-sm sm:text-base text-slate-300">
+                Ask questions about your career trajectory, skill development, mock interview strategy, or role transition.
               </p>
 
-              {/* ONE COLUMN ON MOBILE, TWO COLUMNS ON LARGER SCREENS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-3xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-2xl">
                 {[
-                  "Generate career roadmap",
-                  "Analyze my skills",
-                  "Suggest AI careers",
-                  "Interview preparation tips",
+                  "Generate a 3-month career roadmap",
+                  "Analyze my technical skills for Staff Engineer",
+                  "How to negotiate salary in tech?",
+                  "Mock behavioral interview prep tips",
                 ].map((item, i) => (
                   <button
                     key={i}
                     onClick={() => handleQuickPrompt(item)}
-                    className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-sm text-left"
+                    className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-left text-sm text-slate-200 shadow-xl backdrop-blur-md transition hover:-translate-y-0.5 hover:border-indigo-500/40 hover:bg-slate-900/90 cursor-pointer"
                   >
                     {item}
                   </button>
@@ -409,11 +309,11 @@ export default function Page() {
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[85%] sm:max-w-[70%] px-4 py-2 rounded-xl text-sm whitespace-pre-wrap break-words
+                className={`max-w-[85%] sm:max-w-[75%] px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap break-words leading-relaxed shadow-lg
                 ${
                   msg.role === "user"
-                    ? `${themes[theme].button} text-black`
-                    : "bg-[#111827] border border-white/10"
+                    ? `${themes[theme].button} text-white font-medium`
+                    : "border border-white/10 bg-slate-900/80 text-slate-100 backdrop-blur-xl"
                 }`}
               >
                 {msg.text}
@@ -421,39 +321,36 @@ export default function Page() {
             </div>
           ))}
 
-          {loading && <div className="text-gray-400 text-sm">Thinking...</div>}
+          {loading && (
+            <div className="flex items-center gap-2 text-sm text-indigo-400 font-medium animate-pulse">
+              <span className="h-2 w-2 rounded-full bg-indigo-400 animate-ping" />
+              SENSAI is thinking...
+            </div>
+          )}
 
-          {/* EMPTY DIV USED AS A SCROLL TARGET - KEEPS LATEST MESSAGE IN VIEW */}
           <div ref={bottomRef}></div>
         </div>
 
-        {/* INPUT BAR - "shrink-0" KEEPS IT PINNED AT THE BOTTOM, ALWAYS VISIBLE */}
-        <div className="shrink-0 p-3 sm:p-4 border-t border-white/10 bg-[#0a0f1a]">
+        {/* INPUT BAR */}
+        <div className="shrink-0 border-t border-white/10 bg-slate-900/80 backdrop-blur-xl p-3 sm:p-4">
           <div
-            className={`
-              max-w-4xl mx-auto flex gap-2 items-center
-              bg-[#111827] p-2 sm:p-2.5 rounded-2xl
-              border border-white/10
-              shadow-lg shadow-black/30
-              focus-within:border-white/25 focus-within:ring-2 focus-within:ring-white/10
-              transition-colors
-            `}
+            className="max-w-4xl mx-auto flex gap-2 items-center bg-slate-950/60 p-2 rounded-2xl border border-slate-800 shadow-inner focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all"
           >
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Ask anything about your career..."
-              className="flex-1 min-w-0 bg-transparent outline-none text-sm px-2 py-2 placeholder:text-gray-500"
+              placeholder="Ask anything about your career, interview prep, or skills..."
+              className="flex-1 min-w-0 bg-transparent px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500"
             />
 
             <button
               onClick={sendMessage}
               disabled={!input.trim()}
               className={`
-                px-4 sm:px-5 py-2.5 rounded-xl text-black text-sm font-semibold shrink-0
-                shadow-md transition-transform active:scale-95
+                px-5 py-2 rounded-xl text-white text-sm font-semibold shrink-0
+                shadow-lg transition-transform active:scale-95 cursor-pointer
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
                 ${themes[theme].button}
               `}

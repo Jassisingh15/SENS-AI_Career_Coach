@@ -26,42 +26,55 @@ export default function StatsCards({ assessments }) {
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Card>
+      <Card className="relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full bg-emerald-500/10 blur-xl" />
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-          <Trophy className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium text-slate-300">Average Score</CardTitle>
+          <Trophy className="h-4 w-4 text-emerald-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{getAverageScore()}%</div>
-          <p className="text-xs text-muted-foreground">
+          <div className="text-3xl font-extrabold text-white">
+            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              {getAverageScore()}%
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
             Across all assessments
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full bg-cyan-500/10 blur-xl" />
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
+          <CardTitle className="text-sm font-medium text-slate-300">
             Questions Practiced
           </CardTitle>
-          <Brain className="h-4 w-4 text-muted-foreground" />
+          <Brain className="h-4 w-4 text-cyan-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{getTotalQuestions()}</div>
-          <p className="text-xs text-muted-foreground">Total questions</p>
+          <div className="text-3xl font-extrabold text-white">
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              {getTotalQuestions()}
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">Total questions completed</p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full bg-violet-500/10 blur-xl" />
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Latest Score</CardTitle>
-          <Target className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium text-slate-300">Latest Score</CardTitle>
+          <Target className="h-4 w-4 text-violet-400" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {getLatestAssessment()?.quizScore.toFixed(1) || 0}%
+          <div className="text-3xl font-extrabold text-white">
+            <span className="bg-gradient-to-r from-violet-400 to-indigo-300 bg-clip-text text-transparent">
+              {getLatestAssessment()?.quizScore.toFixed(1) || 0}%
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground">Most recent quiz</p>
+          <p className="text-xs text-slate-400 mt-1">Most recent quiz score</p>
         </CardContent>
       </Card>
     </div>

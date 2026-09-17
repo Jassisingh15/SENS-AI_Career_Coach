@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -30,7 +30,7 @@ import useFetch from "@/hooks/use-fetch";
 import { onboardingSchema } from "@/app/lib/schema";
 import { updateUser } from "@/actions/user";
 
-const OnboardingForm = ({ industries }) => {
+const OnboardingForm = ({ industries, isEditMode = false }) => {
   const router = useRouter();
   const [selectedIndustry, setSelectedIndustry] = useState(null);
 
@@ -67,27 +67,30 @@ const OnboardingForm = ({ industries }) => {
 
   useEffect(() => {
     if (updateResult?.success && !updateLoading) {
-      toast.success("Profile completed successfully!");
+      toast.success(isEditMode ? "Profile updated successfully!" : "Profile completed successfully!");
       router.push("/dashboard");
       router.refresh();
     }
-  }, [updateResult, updateLoading]);
+  }, [updateResult, updateLoading, router, isEditMode]);
 
   const watchIndustry = watch("industry");
 
   return (
-    <div className="flex items-center justify-center bg-background">
-      <Card className="w-full max-w-lg mt-10 mx-2">
-        <CardHeader>
-          <CardTitle className="gradient-title text-4xl">
-            Complete Your Profile
+    <div className="flex items-center justify-center px-3 py-6 relative">
+      <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 h-72 w-96 rounded-full bg-violet-600/15 blur-3xl -z-10" />
+
+      <Card className="mx-2 w-full max-w-xl overflow-hidden border-white/10 bg-slate-900/70 backdrop-blur-xl shadow-2xl">
+        <CardHeader className="border-b border-white/10 bg-slate-950/60 p-6 md:p-8">
+          <CardTitle className="text-3xl font-extrabold bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
+            {isEditMode ? "Update Career Profile" : "Complete Your Profile"}
           </CardTitle>
-          <CardDescription>
-            Select your industry to get personalized career insights and
-            recommendations.
+          <CardDescription className="text-slate-400 mt-1">
+            {isEditMode
+              ? "Change your target industry and specialization to recalculate career analytics"
+              : "Select your industry and background to get customized career intelligence and AI recommendations."}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 md:p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
@@ -115,7 +118,7 @@ const OnboardingForm = ({ industries }) => {
                 </SelectContent>
               </Select>
               {errors.industry && (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-rose-400 font-medium">
                   {errors.industry.message}
                 </p>
               )}
@@ -142,7 +145,7 @@ const OnboardingForm = ({ industries }) => {
                   </SelectContent>
                 </Select>
                 {errors.subIndustry && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-rose-400 font-medium">
                     {errors.subIndustry.message}
                   </p>
                 )}
@@ -160,7 +163,7 @@ const OnboardingForm = ({ industries }) => {
                 {...register("experience")}
               />
               {errors.experience && (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-rose-400 font-medium">
                   {errors.experience.message}
                 </p>
               )}
@@ -170,14 +173,14 @@ const OnboardingForm = ({ industries }) => {
               <Label htmlFor="skills">Skills</Label>
               <Input
                 id="skills"
-                placeholder="e.g., Python, JavaScript, Project Management"
+                placeholder="e.g., Python, React, Next.js, Product Design"
                 {...register("skills")}
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-slate-400">
                 Separate multiple skills with commas
               </p>
               {errors.skills && (
-                <p className="text-sm text-red-500">{errors.skills.message}</p>
+                <p className="text-sm text-rose-400 font-medium">{errors.skills.message}</p>
               )}
             </div>
 
@@ -185,25 +188,45 @@ const OnboardingForm = ({ industries }) => {
               <Label htmlFor="bio">Professional Bio</Label>
               <Textarea
                 id="bio"
-                placeholder="Tell us about your professional background..."
+                placeholder="Tell us about your professional background and career objectives..."
                 className="h-32"
                 {...register("bio")}
               />
               {errors.bio && (
-                <p className="text-sm text-red-500">{errors.bio.message}</p>
+                <p className="text-sm text-rose-400 font-medium">{errors.bio.message}</p>
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={updateLoading}>
-              {updateLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Complete Profile"
+            <div className="pt-2">
+              {/* ANIMATED AI AURA BORDER AROUND SUBMIT */}
+              <div className="relative group p-[1.5px] rounded-xl overflow-hidden shadow-[0_0_20px_rgba(124,58,237,0.35)]">
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-indigo-500 to-cyan-400 animate-pulse-slow blur-[1px]" />
+                <Button
+                  type="submit"
+                  className="relative w-full py-3 h-12 text-base font-bold bg-slate-950 hover:bg-slate-900 text-white transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  disabled={updateLoading}
+                >
+                  {updateLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                      Saving Profile...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 text-cyan-300" />
+                      {isEditMode ? "Save Changes" : "Complete Profile"}
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* PURPLE SHIMMER LOADER */}
+              {updateLoading && (
+                <div className="w-full space-y-2 pt-4 animate-pulse">
+                  <div className="h-2.5 w-1/3 mx-auto rounded bg-gradient-to-r from-violet-600/30 via-indigo-500/40 to-violet-600/30" />
+                </div>
               )}
-            </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
