@@ -33,22 +33,22 @@ export default function HeaderNav() {
     pathname?.startsWith("/interview");
 
   return (
-    <div className="flex items-center space-x-2 md:space-x-3">
+    <div className="flex items-center gap-1.5 sm:gap-2">
       {/* Home Button */}
       <Link href="/" className="relative">
         <Button
           variant="secondary"
-          className={`flex items-center gap-2 border transition-all duration-200 ${
+          className={`h-9 rounded-md px-2.5 text-sm font-medium flex items-center gap-2 border transition-colors duration-200 ${
             isHomeActive
-              ? "border-indigo-500/40 bg-indigo-500/15 text-white shadow-[0_0_15px_rgba(99,102,241,0.25)]"
-              : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
+              ? "border-blue-400/25 bg-blue-500/10 text-slate-50 shadow-sm shadow-blue-950/30"
+              : "border-transparent bg-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-800/70 hover:text-slate-100"
           }`}
         >
           <Home className="h-4 w-4" />
           <span className="hidden sm:inline">Home</span>
         </Button>
         {isHomeActive && (
-          <span className="absolute -bottom-1.5 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_8px_#818cf8]" />
+          <span className="absolute -bottom-[10px] left-3 right-3 h-px bg-blue-400" />
         )}
       </Link>
 
@@ -56,17 +56,17 @@ export default function HeaderNav() {
       <Link href="/onboarding?edit=true" className="relative">
         <Button
           variant="secondary"
-          className={`flex items-center gap-2 border transition-all duration-200 ${
+          className={`h-9 rounded-md px-2.5 text-sm font-medium flex items-center gap-2 border transition-colors duration-200 ${
             isOnboardingActive
-              ? "border-indigo-500/40 bg-indigo-500/15 text-white shadow-[0_0_15px_rgba(99,102,241,0.25)]"
-              : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
+              ? "border-blue-400/25 bg-blue-500/10 text-slate-50 shadow-sm shadow-blue-950/30"
+              : "border-transparent bg-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-800/70 hover:text-slate-100"
           }`}
         >
           <GraduationCap className="h-4 w-4" />
           <span className="hidden sm:inline">Change Field</span>
         </Button>
         {isOnboardingActive && (
-          <span className="absolute -bottom-1.5 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_8px_#818cf8]" />
+          <span className="absolute -bottom-[10px] left-3 right-3 h-px bg-blue-400" />
         )}
       </Link>
 
@@ -75,10 +75,10 @@ export default function HeaderNav() {
         <Link href="/dashboard" className="relative">
           <Button
             variant="secondary"
-            className={`hidden items-center gap-2 border transition-all duration-200 md:inline-flex ${
+            className={`hidden h-9 rounded-md px-2.5 text-sm font-medium items-center gap-2 border transition-colors duration-200 md:inline-flex ${
               isDashboardActive
-                ? "border-indigo-500/40 bg-indigo-500/15 text-white shadow-[0_0_15px_rgba(99,102,241,0.25)]"
-                : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
+                ? "border-blue-400/25 bg-blue-500/10 text-slate-50 shadow-sm shadow-blue-950/30"
+                : "border-transparent bg-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-800/70 hover:text-slate-100"
             }`}
           >
             <LayoutDashboard className="h-4 w-4" />
@@ -87,16 +87,16 @@ export default function HeaderNav() {
 
           <Button
             variant="secondary"
-            className={`h-9 w-9 p-0 border md:hidden ${
+            className={`h-9 w-9 rounded-md p-0 border transition-colors md:hidden ${
               isDashboardActive
-                ? "border-indigo-500/40 bg-indigo-500/15 text-white"
-                : "border-white/10 bg-white/5 text-slate-300 hover:text-white"
+                ? "border-blue-400/25 bg-blue-500/10 text-slate-50"
+                : "border-transparent bg-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-800/70 hover:text-slate-100"
             }`}
           >
             <LayoutDashboard className="h-4 w-4" />
           </Button>
           {isDashboardActive && (
-            <span className="absolute -bottom-1.5 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_8px_#818cf8]" />
+            <span className="absolute -bottom-[10px] left-3 right-3 h-px bg-blue-400" />
           )}
         </Link>
 
@@ -105,29 +105,29 @@ export default function HeaderNav() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                className={`flex items-center gap-2 text-white shadow-lg transition-all duration-300 ${
+                className={`h-9 rounded-md px-3 text-sm font-semibold flex items-center gap-2 text-white shadow-sm transition-all duration-200 ${
                   isGrowthActive
-                    ? "bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-600 shadow-[0_0_25px_rgba(124,58,237,0.5)] ring-1 ring-indigo-400/50"
-                    : "bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600 shadow-indigo-950/50 hover:shadow-[0_0_25px_rgba(124,58,237,0.4)]"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-950/60 ring-1 ring-blue-300/25"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-950/50 hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-900/50"
                 }`}
               >
-                <StarsIcon className="h-4 w-4 text-cyan-300" />
+                <StarsIcon className="h-4 w-4 text-blue-100" />
                 <span className="hidden md:block">Growth Tools</span>
-                <ChevronDown className="h-4 w-4 text-indigo-200" />
+                <ChevronDown className="h-4 w-4 text-blue-100/80" />
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-52 p-1.5 border border-white/10 bg-slate-900/95 backdrop-blur-2xl shadow-2xl rounded-2xl">
+            <DropdownMenuContent align="end" className="w-52 rounded-lg border border-slate-700/80 bg-[#111a2a] p-1.5 shadow-xl shadow-black/35">
               <DropdownMenuItem asChild>
                 <Link
                   href="/resume"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                     pathname?.startsWith("/resume")
-                      ? "bg-indigo-600/20 text-white font-semibold"
-                      : "text-slate-300 hover:bg-white/5 hover:text-white"
+                      ? "bg-blue-500/10 text-white font-semibold"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
-                  <FileText className="h-4 w-4 text-indigo-400" />
+                  <FileText className="h-4 w-4 text-blue-400" />
                   Build Resume
                 </Link>
               </DropdownMenuItem>
@@ -135,13 +135,13 @@ export default function HeaderNav() {
               <DropdownMenuItem asChild>
                 <Link
                   href="/ai-cover-letter"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                     pathname?.startsWith("/ai-cover-letter")
-                      ? "bg-cyan-600/20 text-white font-semibold"
-                      : "text-slate-300 hover:bg-white/5 hover:text-white"
+                      ? "bg-blue-500/10 text-white font-semibold"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
-                  <PenBox className="h-4 w-4 text-cyan-400" />
+                  <PenBox className="h-4 w-4 text-blue-400" />
                   Cover Letter
                 </Link>
               </DropdownMenuItem>
@@ -149,20 +149,20 @@ export default function HeaderNav() {
               <DropdownMenuItem asChild>
                 <Link
                   href="/interview"
-                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                     pathname?.startsWith("/interview")
-                      ? "bg-emerald-600/20 text-white font-semibold"
-                      : "text-slate-300 hover:bg-white/5 hover:text-white"
+                      ? "bg-blue-500/10 text-white font-semibold"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
-                  <GraduationCap className="h-4 w-4 text-emerald-400" />
+                  <GraduationCap className="h-4 w-4 text-blue-400" />
                   Interview Prep
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           {isGrowthActive && (
-            <span className="absolute -bottom-1.5 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_8px_#818cf8]" />
+            <span className="absolute -bottom-[10px] left-3 right-3 h-px bg-blue-400" />
           )}
         </div>
       </SignedIn>
@@ -172,7 +172,7 @@ export default function HeaderNav() {
         <SignInButton>
           <Button
             variant="secondary"
-            className="border-indigo-500/30 bg-indigo-500/10 text-indigo-200 hover:border-indigo-400 hover:bg-indigo-500/20 hover:text-white font-semibold shadow-sm"
+            className="h-9 rounded-md border border-blue-400/25 bg-gradient-to-r from-blue-600 to-indigo-600 px-3 text-sm font-semibold text-white shadow-sm shadow-blue-950/50 transition-all duration-200 hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-900/50"
           >
             Sign In
           </Button>
@@ -184,8 +184,8 @@ export default function HeaderNav() {
         <UserButton
           appearance={{
             elements: {
-              avatarBox: "w-9 h-9 ring-2 ring-indigo-500/30 hover:ring-indigo-500/60 transition-all",
-              userButtonPopoverCard: "bg-slate-900 border border-white/10 shadow-2xl backdrop-blur-xl",
+              avatarBox: "w-9 h-9 ring-1 ring-slate-600 hover:ring-blue-400/70 transition-all",
+              userButtonPopoverCard: "bg-[#111a2a] border border-slate-700/80 shadow-2xl",
               userPreviewMainIdentifier: "font-semibold text-white",
               userPreviewSecondaryIdentifier: "text-slate-400",
             },
